@@ -263,6 +263,8 @@ function anzeigen() {
   // Monate ohne Einträge bleiben leer (kein 0,00 €)
   const gesamt = einkommenSumme(monat);
   document.getElementById("ein-summe").textContent = gesamt === null ? "–" : geld(gesamt);
+
+  quellenEinstellungenZeichnen();
 }
 
 document.getElementById("monat-zurueck").addEventListener("click", function () {
@@ -284,7 +286,6 @@ document.getElementById("gehalt-form").addEventListener("submit", function (e) {
     if (name === "") return;
     if (quelleVorhanden(name)) { nameFeld.setCustomValidity(t("qu_doppelt")); nameFeld.reportValidity(); nameFeld.setCustomValidity(""); return; }
     daten.eigene.push(name);
-    quellenEinstellungenZeichnen();
     quellenFuellen();
     auswahl.value = name;
   }
@@ -310,24 +311,22 @@ function quelleVorhanden(name) {
   });
 }
 
-// Eigene Einkommensquellen in den Einstellungen anlegen und löschen
-function quellenEinstellungenZeichnen() {
-  const liste = document.getElementById("einst-quellen");
+// Einstellungen: bereits angelegte Punkte einzeln löschen (wie bei den Fixkosten)
+function einstellungenListe(listeId, namen, vorsatz, frage, loeschenFunktion) {
+  const liste = document.getElementById(listeId);
   liste.innerHTML = "";
-  daten.eigene.forEach(function (name) {
+  namen.forEach(function (name) {
     const li = document.createElement("li");
     const text = document.createElement("span");
-    text.textContent = name;
+    text.textContent = tName(name, vorsatz);
     const loeschen = document.createElement("button");
     loeschen.type = "button";
     loeschen.textContent = "×";
-    loeschen.setAttribute("aria-label", name + " " + t("loeschen"));
+    loeschen.setAttribute("aria-label", tName(name, vorsatz) + " " + t("loeschen"));
     loeschen.addEventListener("click", function () {
-      if (!window.confirm(t("qu_loeschen_frage"))) return;
-      daten.eigene = daten.eigene.filter(function (n) { return n !== name; });
-      daten.quellen = daten.quellen.filter(function (q) { return q.name !== name; });
+      if (!window.confirm(t(frage))) return;
+      loeschenFunktion(name);
       speichern();
-      quellenEinstellungenZeichnen();
       anzeigen();
     });
     li.append(text, loeschen);
@@ -335,20 +334,25 @@ function quellenEinstellungenZeichnen() {
   });
 }
 
-document.getElementById("einst-quellen-form").addEventListener("submit", function (e) {
-  e.preventDefault();
-  const feld = document.getElementById("einst-quellen-name");
-  const name = feld.value.trim().slice(0, 30);
-  if (name === "") return;
-  if (quelleVorhanden(name)) { feld.setCustomValidity(t("qu_doppelt")); feld.reportValidity(); feld.setCustomValidity(""); return; }
-  daten.eigene.push(name);
-  speichern();
-  feld.value = "";
-  quellenEinstellungenZeichnen();
-  anzeigen();
-});
+function quellenEinstellungenZeichnen() {
+  // Laufendes Einkommen: alle eigenen Quellen und alle festen, für die schon Beträge eingetragen sind
+  const quellen = alleQuellen().filter(function (name) {
+    return daten.eigene.indexOf(name) !== -1 || daten.quellen.some(function (q) { return q.name === name; });
+  });
+  einstellungenListe("einst-quellen", quellen, "qu_", "qu_loeschen_frage", function (name) {
+    daten.eigene = daten.eigene.filter(function (n) { return n !== name; });
+    daten.quellen = daten.quellen.filter(function (q) { return q.name !== name; });
+  });
 
-quellenEinstellungenZeichnen();
+  // Sonderzahlungen: jede Bezeichnung, die vorkommt, einmal
+  const sonderNamen = [];
+  daten.sonder.forEach(function (s) {
+    if (sonderNamen.indexOf(s.name) === -1) sonderNamen.push(s.name);
+  });
+  einstellungenListe("einst-sonder", sonderNamen, "sz_", "sz_loeschen_frage", function (name) {
+    daten.sonder = daten.sonder.filter(function (s) { return s.name !== name; });
+  });
+}
 
 // Bei "Anderes" erscheint ein Textfeld für die Bezeichnung
 const sonderArt = document.getElementById("sonder-art");
