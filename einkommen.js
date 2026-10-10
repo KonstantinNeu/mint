@@ -5,6 +5,7 @@ const SPEICHER_NAME = "finanzapp-einkommen";
 
 // Feste Einkommensquellen; eigene stehen in daten.eigene
 const QUELLEN_STANDARD = ["Gehalt", "Nebenjob", "Pension", "Kindergeld", "Mieteinnahmen"];
+const QUELLE_ANDERES = "__anderes"; // Auswahl "Anderes": neue eigene Quelle mit Bezeichnung
 
 let daten = { quellen: [], eigene: [], sonder: [] };
 let monat = 0; // 0 = Oktober 2026 ... 11 = September 2027
@@ -182,7 +183,11 @@ function quellenFuellen() {
     option.textContent = tName(name, "qu_");
     auswahl.append(option);
   });
-  if (alleQuellen().indexOf(alt) !== -1) auswahl.value = alt;
+  const anderes = document.createElement("option");
+  anderes.value = QUELLE_ANDERES;
+  anderes.textContent = t("sz_Anderes");
+  auswahl.append(anderes);
+  if (alleQuellen().indexOf(alt) !== -1 || alt === QUELLE_ANDERES) auswahl.value = alt;
 }
 
 // Neuen Betrag einer Quelle ab dem angezeigten Monat speichern (ersetzt einen Eintrag desselben Monats)
@@ -271,10 +276,39 @@ document.getElementById("gehalt-form").addEventListener("submit", function (e) {
   e.preventDefault();
   const betrag = zuZahl(document.getElementById("gehalt-betrag").value);
   if (betrag === null || betrag < 0) return;
-  const name = document.getElementById("quelle-art").value;
+  const auswahl = document.getElementById("quelle-art");
+  const nameFeld = document.getElementById("quelle-name");
+  let name = auswahl.value;
+  if (name === QUELLE_ANDERES) {
+    name = nameFeld.value.trim().slice(0, 30);
+    if (name === "") return;
+    if (quelleVorhanden(name)) { nameFeld.setCustomValidity(t("qu_doppelt")); nameFeld.reportValidity(); nameFeld.setCustomValidity(""); return; }
+    daten.eigene.push(name);
+    quellenEinstellungenZeichnen();
+    quellenFuellen();
+    auswahl.value = name;
+  }
   document.getElementById("gehalt-betrag").value = "";
+  nameFeld.value = "";
+  nameFeld.hidden = true;
+  nameFeld.required = false;
   quelleSetzen(name, betrag);
 });
+
+// Bei "Anderes" erscheint ein Textfeld für die Bezeichnung
+document.getElementById("quelle-art").addEventListener("change", function () {
+  const anderes = this.value === QUELLE_ANDERES;
+  const nameFeld = document.getElementById("quelle-name");
+  nameFeld.hidden = !anderes;
+  nameFeld.required = anderes;
+});
+
+// Gibt es den Namen schon (fest oder eigen, auch übersetzt)?
+function quelleVorhanden(name) {
+  return alleQuellen().some(function (n) {
+    return n.toLowerCase() === name.toLowerCase() || tName(n, "qu_").toLowerCase() === name.toLowerCase();
+  });
+}
 
 // Eigene Einkommensquellen in den Einstellungen anlegen und löschen
 function quellenEinstellungenZeichnen() {
@@ -306,10 +340,7 @@ document.getElementById("einst-quellen-form").addEventListener("submit", functio
   const feld = document.getElementById("einst-quellen-name");
   const name = feld.value.trim().slice(0, 30);
   if (name === "") return;
-  const gibtEs = alleQuellen().some(function (n) {
-    return n.toLowerCase() === name.toLowerCase() || tName(n, "qu_").toLowerCase() === name.toLowerCase();
-  });
-  if (gibtEs) { feld.setCustomValidity(t("qu_doppelt")); feld.reportValidity(); feld.setCustomValidity(""); return; }
+  if (quelleVorhanden(name)) { feld.setCustomValidity(t("qu_doppelt")); feld.reportValidity(); feld.setCustomValidity(""); return; }
   daten.eigene.push(name);
   speichern();
   feld.value = "";
