@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="de" translate="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="google" content="notranslate">
+  <meta name="theme-color" content="#0b1530">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Mint">
+  <title>Mint</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="intro-laeuft">
+
+  <!-- Logo-Material: goldenes Quadrat mit Minzblatt -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="100" y2="100">
+        <stop offset="0" style="stop-color: var(--akzent-hell)"/>
+        <stop offset="0.5" style="stop-color: var(--akzent)"/>
+        <stop offset="1" style="stop-color: var(--akzent-dunkel)"/>
+      </linearGradient>
+      <g id="quadrat"><rect x="6" y="6" width="88" height="88" rx="24" fill="url(#g)"/></g>
+      <!-- Das Blatt, Mittelpunkt (50, 50), damit es sich um sich selbst drehen kann -->
+      <g id="blatt-form"><path d="M50 26 C 68 40, 68 60, 50 74 C 32 60, 32 40, 50 26 Z"/></g>
+      <g id="blatt-adern"><path d="M50 33 L50 70 M50 45 L58 38 M50 45 L42 38 M50 57 L59 50 M50 57 L41 50" fill="none" stroke-width="1.8" stroke-linecap="round"/></g>
+    </defs>
+  </svg>
+
+  <!-- Sperrbildschirm: PIN-Eingabe beim Öffnen und beim Festlegen der PIN -->
+  <div id="sperre" hidden>
+    <svg class="willkommen-blatt" viewBox="30 22 40 56">
+      <use href="#blatt-form" fill="url(#g)"/>
+      <use href="#blatt-adern" style="stroke: var(--hintergrund)"/>
+    </svg>
+    <h2 id="sp-titel"></h2>
+    <div class="sp-punkte" id="sp-punkte"><span></span><span></span><span></span><span></span></div>
+    <p id="sp-meldung" class="sp-meldung"></p>
+    <div class="sp-tasten" id="sp-tasten"></div>
+    <button type="button" id="sp-abbrechen" class="link" data-i18n="abbrechen">Abbrechen</button>
+  </div>
+
+  <!-- Namensfrage, erscheint nur beim allerersten Start -->
+  <div id="willkommen" hidden>
+    <svg class="willkommen-blatt" viewBox="30 22 40 56">
+      <use href="#blatt-form" fill="url(#g)"/>
+      <use href="#blatt-adern" style="stroke: var(--hintergrund)"/>
+    </svg>
+    <h2 id="willkommen-frage"></h2>
+    <form id="willkommen-form">
+      <input id="willkommen-name" type="text" maxlength="24" autocomplete="off" data-i18n-ph="name_ph" placeholder="Dein Name">
+      <button type="submit" class="voll" data-i18n="weiter">Weiter</button>
+    </form>
+    <button type="button" id="willkommen-skip" class="link" data-i18n="willkommen_skip">Lieber nicht verraten</button>
+  </div>
+  <!-- Start-Animation -->
+  <div id="intro" role="button" data-i18n-aria="intro_aria" aria-label="Mint öffnen">
+    <div class="licht"></div>
+    <div class="logo">
+      <svg class="ganz" viewBox="0 0 100 100"><use href="#quadrat"/></svg>
+      <svg class="haelfte links" viewBox="0 0 50 100"><use href="#quadrat"/></svg>
+      <svg class="haelfte rechts" viewBox="50 0 50 100"><use href="#quadrat"/></svg>
+      <svg class="m-rad" viewBox="0 0 100 100">
+        <g transform="translate(50 50) scale(1.25) translate(-50 -50)">
+          <use href="#blatt-form" style="fill: var(--hintergrund)"/>
+          <use href="#blatt-adern" stroke="url(#g)"/>
+        </g>
+      </svg>
+    </div>
+    <div class="strahlen"></div>
+    <canvas id="funken"></canvas>
+    <div class="blitz"></div>
+    <p class="tippen" data-i18n="tippen">TIPPEN ZUM ÖFFNEN</p>
+  </div>
+
+  <header class="kopf">
+    <button id="einst-knopf" class="einst-knopf" data-i18n-aria="einst_titel" aria-label="Einstellungen">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="2.4" style="fill: var(--hintergrund)"/><circle cx="15" cy="12" r="2.4" style="fill: var(--hintergrund)"/><circle cx="8" cy="18" r="2.4" style="fill: var(--hintergrund)"/></svg>
+    </button>
+    <div class="kopf-zeile" id="kopf-start" role="button" tabindex="0" data-i18n-aria="zur_uebersicht" aria-label="Zur Übersicht">
+      <svg class="kopf-blatt" viewBox="30 22 40 56">
+        <use href="#blatt-form" fill="url(#g)"/>
+        <use href="#blatt-adern" style="stroke: var(--hintergrund)"/>
+      </svg>
+      <h1>Mint</h1>
+    </div>
+  </header>
+
+  <main>
+    <section id="uebersicht" class="seite aktiv">
+      <div class="begruessung">
+        <h2 id="gruss" class="gruss"></h2>
+        <p id="spruch" class="spruch"></p>
+      </div>
+
+      <div class="monat-wahl">
+        <button id="ue-zurueck" data-i18n-aria="voriger_monat" aria-label="Voriger Monat">‹</button>
+        <strong id="ue-monat-name"></strong>
+        <button id="ue-vor" data-i18n-aria="naechster_monat" aria-label="Nächster Monat">›</button>
+      </div>
+
+      <div class="karte summe">
+        <span data-i18n="ue_ueberschuss">Monatsüberschuss</span>
+        <strong id="ue-ueberschuss" class="gross-zahl"></strong>
+      </div>
+
+      <div class="karte">
+        <ul class="liste">
+          <li><span data-i18n="einnahmen">Einnahmen</span><strong id="ue-einnahmen" class="einnahme"></strong></li>
+          <li><span data-i18n="nav_fixkosten">Fixkosten</span><strong id="ue-fix" class="ausgabe"></strong></li>
+          <li><span data-i18n="ue_ausgaben">Tägliche Ausgaben</span><strong id="ue-ausgaben" class="ausgabe"></strong></li>
+          <li><span data-i18n="ue_sparen">Sparen</span><strong id="ue-sparen"></strong></li>
+          <li><span data-i18n="ue_schuldenzahlung">Schuldenzahlungen</span><strong id="ue-schuldenzahlung" class="ausgabe"></strong></li>
+        </ul>
+      </div>
+
+      <div class="karte summe">
+        <span data-i18n="ue_ruecklage">Gespart gesamt</span>
+        <strong id="ue-ruecklage" class="gross-zahl"></strong>
+      </div>
+      <div class="karte summe">
+        <span data-i18n="sch_offen_ue">Schulden offen</span>
+        <strong id="ue-schulden" class="gross-zahl ausgabe"></strong>
+      </div>
+    </section>
+
+    <section id="einkommen" class="seite">
+      <h2 data-i18n="nav_einkommen">Einkommen</h2>
+      <div class="monat-wahl">
+        <button id="monat-zurueck" data-i18n-aria="voriger_monat" aria-label="Voriger Monat">‹</button>
+        <strong id="monat-name"></strong>
+        <button id="monat-vor" data-i18n-aria="naechster_monat" aria-label="Nächster Monat">›</button>
+      </div>
+
+      <div class="karte summe">
+        <span data-i18n="ein_gesamt">Einnahmen gesamt</span>
+        <strong id="ein-summe" class="einnahme"></strong>
+      </div>
+
+      <div class="karte">
+        <h3 data-i18n="ein_gehalt">Grundgehalt (netto)</h3>
+        <p id="gehalt-aktuell" class="hinweis"></p>
+        <form id="gehalt-form" class="zeile">
+          <input id="gehalt-betrag" type="text" inputmode="decimal" data-i18n-phw="betrag_in" placeholder="Betrag in €" required>
+          <button type="submit" data-i18n="buchen">Buchen</button>
+        </form>
+        <p class="hinweis" data-i18n="ein_gilt_ab">Gilt ab dem angezeigten Monat für alle folgenden Monate.</p>
+      </div>
+
+      <div class="karte">
+        <h3 data-i18n="ein_sonder">Sonderzahlungen</h3>
+        <ul id="sonder-liste" class="liste"></ul>
+        <form id="sonder-form">
+          <select id="sonder-art">
+            <option value="Weihnachtsgeld" data-i18n="sz_Weihnachtsgeld">Weihnachtsgeld</option>
+            <option value="Urlaubsgeld" data-i18n="sz_Urlaubsgeld">Urlaubsgeld</option>
+            <option value="Provision" data-i18n="sz_Provision">Provision</option>
+            <option value="Steuerausgleich" data-i18n="sz_Steuerausgleich">Steuerausgleich</option>
+            <option value="Anderes" data-i18n="sz_Anderes">Anderes</option>
+          </select>
+          <input id="sonder-name" type="text" data-i18n-ph="bezeichnung" placeholder="Bezeichnung" autocomplete="off" hidden>
+          <div class="zeile">
+            <input id="sonder-betrag" type="text" inputmode="decimal" data-i18n-phw="betrag_in" placeholder="Betrag in €" required>
+            <button type="submit" data-i18n="buchen">Buchen</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="fixkosten" class="seite">
+      <h2 data-i18n="nav_fixkosten">Fixkosten</h2>
+      <div class="monat-wahl">
+        <button id="fix-zurueck" data-i18n-aria="voriger_monat" aria-label="Voriger Monat">‹</button>
+        <strong id="fix-monat-name"></strong>
+        <button id="fix-vor" data-i18n-aria="naechster_monat" aria-label="Nächster Monat">›</button>
+      </div>
+
+      <div class="karte summe">
+        <span data-i18n="fix_gesamt">Fixkosten gesamt</span>
+        <strong id="fix-summe" class="ausgabe"></strong>
+      </div>
+      <div id="fix-leer" class="karte" hidden>
+        <p class="hinweis" data-i18n="fix_leer">Noch keine Fixkosten angelegt.</p>
+        <button type="button" id="fix-zu-einst" class="gold-knopf" data-i18n="zu_einst">Zu den Einstellungen</button>
+      </div>
+
+
+      <div class="karte">
+        <p class="hinweis" data-i18n-html="fix_hinweis">Ein Betrag gilt ab dem angezeigten Monat für alle folgenden Monate. Wenn Kosten enden, trage <span class="zahl">0</span> ein.</p>
+        <ul id="fix-liste" class="liste fix"></ul>
+      </div>
+    </section>
+
+    <section id="ausgaben" class="seite">
+      <h2 data-i18n="nav_ausgaben">Ausgaben</h2>
+      <div class="monat-wahl">
+        <button id="aus-zurueck" data-i18n-aria="voriger_monat" aria-label="Voriger Monat">‹</button>
+        <strong id="aus-monat-name"></strong>
+        <button id="aus-vor" data-i18n-aria="naechster_monat" aria-label="Nächster Monat">›</button>
+      </div>
+
+      <div class="karte summe">
+        <span data-i18n="aus_gesamt">Ausgaben gesamt</span>
+        <strong id="aus-summe" class="ausgabe"></strong>
+      </div>
+
+      <details class="karte aufklapp" open>
+        <summary data-i18n="aus_neu">Neue Ausgabe</summary>
+        <form id="aus-form">
+          <input id="aus-betrag" class="gross" type="text" inputmode="decimal" data-i18n-phw="betrag_in" placeholder="Betrag in €" autocomplete="off" required>
+          <select id="aus-kategorie"></select>
+          <div id="aus-datum-zeile" class="zeile datum" hidden>
+            <button type="button" id="aus-tag-zurueck" data-i18n-aria="tag_frueher" aria-label="Einen Tag früher">‹</button>
+            <strong id="aus-datum-text"></strong>
+            <button type="button" id="aus-tag-vor" data-i18n-aria="tag_spaeter" aria-label="Einen Tag später">›</button>
+          </div>
+          <input id="aus-kommentar" type="text" data-i18n-ph="kommentar_opt" placeholder="Kommentar (optional)" autocomplete="off">
+          <button type="submit" class="voll" data-i18n="buchen">Buchen</button>
+        </form>
+      </details>
+
+      <details class="karte aufklapp">
+        <summary><span data-i18n="aus_eintraege">Einträge</span> <small id="aus-anzahl"></small></summary>
+        <ul id="aus-liste" class="liste"></ul>
+      </details>
+
+      <details class="karte aufklapp">
+        <summary data-i18n="aus_nach_kat">Nach Kategorie</summary>
+        <ul id="aus-kategorien-summen" class="liste"></ul>
+      </details>
+    </section>
+
+    <section id="budget" class="seite">
+      <h2 data-i18n="nav_budget">Budget</h2>
+      <div class="monat-wahl">
+        <button id="bud-zurueck" data-i18n-aria="voriger_monat" aria-label="Voriger Monat">‹</button>
+        <strong id="bud-monat-name"></strong>
+        <button id="bud-vor" data-i18n-aria="naechster_monat" aria-label="Nächster Monat">›</button>
+      </div>
+
+      <div class="karte">
+        <div class="budget-zeile">
+          <span data-i18n="bud_gesamt">Budget gesamt</span>
+          <strong id="bud-gesamt"></strong>
+        </div>
+        <div class="balken" id="bud-gesamt-balken" hidden><span></span></div>
+        <p id="bud-gesamt-notiz" class="budget-notiz"></p>
+      </div>
+
+      <div class="karte">
+        <p class="hinweis" data-i18n-html="bud_hinweis">Tippe auf eine Kategorie und lege dein Budget fest. Es gilt ab dem angezeigten Monat für alle folgenden Monate. Die Ausgaben kommen automatisch aus dem Reiter Ausgaben. Mit <span class="zahl">0</span> entfernst du ein Budget.</p>
+        <ul id="bud-liste" class="liste fix"></ul>
+      </div>
+    </section>
+
+    <section id="schulden" class="seite">
+      <h2 data-i18n="nav_schulden">Schulden</h2>
+
+      <div class="karte">
+        <div class="budget-zeile">
+          <span data-i18n="sch_gesamt_offen">Noch offen</span>
+          <strong id="sch-offen-gesamt" class="ausgabe"></strong>
+        </div>
+        <div class="balken" id="sch-gesamt-balken" hidden><span></span></div>
+        <p id="sch-gesamt-notiz" class="budget-notiz"></p>
+        <p id="sch-raten-notiz" class="budget-notiz" style="margin-top: 2px"></p>
+      </div>
+
+      <details class="karte aufklapp" id="sch-neu-karte">
+        <summary data-i18n="sch_neu">Neue Schuld</summary>
+        <form id="sch-neu-form" class="sch-form">
+          <select id="sch-art" class="auswahl"></select>
+          <input id="sch-name" type="text" maxlength="30" autocomplete="off" data-i18n-ph="sch_name_opt" placeholder="Name (optional)">
+          <input id="sch-gesamt-betrag" type="text" inputmode="decimal" autocomplete="off" required data-i18n-phw="sch_gesamt_in" placeholder="Gesamtbetrag in €">
+          <input id="sch-rate-betrag" type="text" inputmode="decimal" autocomplete="off" data-i18n-phw="sch_rate_in" placeholder="Monatsrate in €">
+          <select id="sch-proJahr" class="auswahl"></select>
+          <button type="submit" class="voll" data-i18n="buchen">Buchen</button>
+        </form>
+      </details>
+
+      <div class="karte">
+        <p class="hinweis" data-i18n="sch_hinweis">Lege eine Schuld an, trage deine Zahlungen ein und sieh, wie viel noch offen ist.</p>
+        <ul id="sch-liste" class="liste fix"></ul>
+      </div>
+    </section>
+
+    <section id="einstellungen" class="seite">
+      <h2 data-i18n="einst_titel">Einstellungen</h2>
+      <div class="karte">
+        <h3 data-i18n="einst_name">Dein Name</h3>
+        <form id="einst-name-form" class="zeile">
+          <input id="einst-name" type="text" maxlength="24" autocomplete="off" data-i18n-ph="name_ph" placeholder="Dein Name">
+          <button type="submit" data-i18n="name_speichern">Speichern</button>
+        </form>
+      </div>
+
+      <div class="karte">
+        <h3 data-i18n="einst_waehrung">Währung</h3>
+        <select id="einst-waehrung" class="auswahl"></select>
+        <p class="hinweis" data-i18n="einst_waehrung_hinweis">Es ändert sich nur die Anzeige. Beträge werden nicht umgerechnet.</p>
+      </div>
+
+      <div class="karte">
+        <h3 data-i18n="einst_bereiche">Bereiche</h3>
+        <p class="hinweis" data-i18n="einst_bereiche_hinweis">Wähle, welche Bereiche du nutzen willst.</p>
+        <ul id="einst-module" class="liste"></ul>
+      </div>
+
+      <div class="karte">
+        <h3 data-i18n="einst_sprache">Sprache</h3>
+        <select id="einst-sprache" class="auswahl"></select>
+      </div>
+
+      <div class="karte">
+        <h3 data-i18n="einst_kategorien">Kategorien</h3>
+        <p class="hinweis" data-i18n="einst_kat_hinweis">Wähle, welche Kategorien du verwenden willst, oder erstelle unten eigene. Nicht gewählte erscheinen nicht bei Ausgaben und Budget. Bereits eingetragene Ausgaben bleiben erhalten. Mindestens eine Kategorie bleibt immer aktiv.</p>
+        <ul id="einst-kategorien" class="liste"></ul>
+        <form id="einst-neue-kategorie-form" class="zeile">
+          <input id="einst-neue-kategorie" type="text" maxlength="24" data-i18n-ph="eigene_kat" placeholder="Eigene Kategorie" autocomplete="off" required>
+          <button type="submit" data-i18n="hinzufuegen">Hinzufügen</button>
+        </form>
+      </div>
+
+      <div class="karte">
+        <h3 data-i18n="einst_fix">Fixkosten</h3>
+        <p class="hinweis" data-i18n="einst_fix_hinweis">Lege hier deine Fixkosten selbst an.</p>
+        <ul id="einst-fix" class="liste"></ul>
+        <form id="einst-fix-form" class="zeile">
+          <input id="einst-fix-name" type="text" maxlength="30" autocomplete="off" data-i18n-ph="fix_posten_ph" placeholder="Neuer Posten" required>
+          <button type="submit" data-i18n="hinzufuegen">Hinzufügen</button>
+        </form>
+      </div>
+
+      <div class="karte">
+        <h3 data-i18n="sp_titel">App-Sperre</h3>
+        <p class="hinweis" data-i18n="sp_hinweis">Schützt die App mit einer 4-stelligen PIN.</p>
+        <p id="sp-status" class="hinweis"></p>
+        <div class="zeile sicherung">
+          <button type="button" id="sp-festlegen"></button>
+          <button type="button" id="sp-entfernen" data-i18n="sp_entfernen">PIN entfernen</button>
+        </div>
+      </div>
+
+      <div class="karte">
+        <h3 data-i18n="sich_titel">Sicherung</h3>
+        <p class="hinweis" data-i18n="sich_hinweis">Deine Daten liegen nur auf diesem Gerät. Speichere sie als Datei, damit sie nicht verloren gehen.</p>
+        <div class="zeile sicherung">
+          <button type="button" id="sich-sichern" data-i18n="sich_sichern">Sichern</button>
+          <button type="button" id="sich-wiederherstellen" data-i18n="sich_wiederherstellen">Wiederherstellen</button>
+        </div>
+        <input type="file" id="sich-datei" accept=".json,application/json" hidden>
+      </div>
+    </section>
+
+    <section id="ruecklage" class="seite">
+      <h2 data-i18n="nav_ruecklage">Sparen</h2>
+      <div class="monat-wahl">
+        <button id="rl-zurueck" data-i18n-aria="voriger_monat" aria-label="Voriger Monat">‹</button>
+        <strong id="rl-monat-name"></strong>
+        <button id="rl-vor" data-i18n-aria="naechster_monat" aria-label="Nächster Monat">›</button>
+      </div>
+
+      <div class="karte summe">
+        <span data-i18n="ue_ruecklage">Gespart gesamt</span>
+        <strong id="rl-stand" class="gross-zahl"></strong>
+      </div>
+
+      <div class="karte summe">
+        <span data-i18n="rl_monat">Diesen Monat gespart</span>
+        <strong id="rl-monat-summe"></strong>
+      </div>
+
+      <details class="karte aufklapp" open>
+        <summary data-i18n="rl_neu">Neuer Eintrag</summary>
+        <form id="rl-form">
+          <input id="rl-betrag" class="gross" type="text" inputmode="decimal" data-i18n-phw="betrag_in" placeholder="Betrag in €" autocomplete="off" required>
+          <div class="umschalter" role="group" data-i18n-aria="aria_ea" aria-label="Sparen oder Entnehmen">
+            <button type="button" id="rl-ein" class="aktiv" data-i18n="einzahlen">Sparen</button>
+            <button type="button" id="rl-aus" data-i18n="auszahlen">Entnehmen</button>
+          </div>
+          <div id="rl-datum-zeile" class="zeile datum" hidden>
+            <button type="button" id="rl-tag-zurueck" data-i18n-aria="tag_frueher" aria-label="Einen Tag früher">‹</button>
+            <strong id="rl-datum-text"></strong>
+            <button type="button" id="rl-tag-vor" data-i18n-aria="tag_spaeter" aria-label="Einen Tag später">›</button>
+          </div>
+          <input id="rl-kommentar" type="text" data-i18n-ph="kommentar_opt" placeholder="Kommentar (optional)" autocomplete="off">
+          <button type="submit" class="voll" data-i18n="buchen">Buchen</button>
+        </form>
+      </details>
+
+      <details class="karte aufklapp">
+        <summary><span data-i18n="aus_eintraege">Einträge</span> <small id="rl-anzahl"></small></summary>
+        <ul id="rl-liste" class="liste"></ul>
+      </details>
+
+      <details class="karte aufklapp">
+        <summary data-i18n="rl_start">Startkapital</summary>
+        <form id="rl-start-form">
+          <p id="rl-start-aktuell" class="hinweis"></p>
+          <div class="zeile">
+            <input id="rl-start-betrag" type="text" inputmode="decimal" data-i18n-phw="betrag_in" placeholder="Betrag in €" autocomplete="off" required>
+            <button type="submit" data-i18n="buchen">Buchen</button>
+          </div>
+        </form>
+      </details>
+
+      <details class="karte aufklapp">
+        <summary data-i18n="ziel_titel">Sparziele</summary>
+        <p class="hinweis" data-i18n="ziel_hinweis">Dein Gespartes füllt die Ziele der Reihe nach.</p>
+        <ul id="ziel-liste" class="liste fix"></ul>
+        <form id="ziel-form" class="ziel-form">
+          <input id="ziel-name" type="text" maxlength="30" autocomplete="off" data-i18n-ph="ziel_name_ph" placeholder="Name des Ziels" required>
+          <div class="zeile">
+            <input id="ziel-betrag" type="text" inputmode="decimal" autocomplete="off" data-i18n-phw="ziel_in" placeholder="Zielbetrag in €" required>
+            <button type="submit" data-i18n="hinzufuegen">Hinzufügen</button>
+          </div>
+        </form>
+      </details>
+    </section>
+
+    <section id="jahr" class="seite">
+      <h2 data-i18n="jahr_titel">Jahresübersicht</h2>
+
+      <div class="karte summe">
+        <span data-i18n="jahr_ueberschuss">Überschuss im Jahr</span>
+        <strong id="jahr-ueberschuss" class="gross-zahl"></strong>
+      </div>
+
+      <div class="karte">
+        <ul id="jahr-summen" class="liste"></ul>
+      </div>
+
+      <div class="karte">
+        <h3 data-i18n="jahr_pro_monat">Pro Monat</h3>
+        <ul id="jahr-monate" class="liste"></ul>
+      </div>
+    </section>
+  </main>
+
+  <nav class="menue">
+    <div class="menue-extra" id="menue-extra">
+      <button data-seite="ruecklage" data-i18n="nav_ruecklage">Sparen</button>
+      <button data-seite="schulden" data-i18n="nav_schulden">Schulden</button>
+      <button data-seite="jahr" data-i18n="nav_jahr">Jahr</button>
+    </div>
+    <div class="menue-zeile">
+      <button data-seite="uebersicht" class="aktiv" data-i18n="nav_uebersicht">Übersicht</button>
+      <button data-seite="einkommen" data-i18n="nav_einkommen">Einkommen</button>
+      <button data-seite="fixkosten" data-i18n="nav_fixkosten">Fixkosten</button>
+      <button data-seite="ausgaben" data-i18n="nav_ausgaben">Ausgaben</button>
+      <button data-seite="budget" data-i18n="nav_budget">Budget</button>
+    </div>
+    <button type="button" class="menue-griff" id="menue-griff" aria-expanded="false" data-i18n-aria="menue_mehr" aria-label="Weitere Reiter"><span aria-hidden="true">▴</span></button>
+  </nav>
+
+  <script src="explosion.js"></script>
+  <script src="app.js"></script>
+  <script src="sprache.js"></script>
+  <script src="sprueche.js"></script>
+  <script src="schulden-texte.js"></script>
+  <script src="einstellungen.js"></script>
+  <script src="einkommen.js"></script>
+  <script src="fixkosten.js"></script>
+  <script src="ausgaben.js"></script>
+  <script src="budget.js"></script>
+  <script src="schulden.js"></script>
+  <script src="ruecklage.js"></script>
+  <script src="sparziele.js"></script>
+  <script src="uebersicht.js"></script>
+  <script src="jahr.js"></script>
+  <script src="begruessung.js"></script>
+  <script src="sperre.js"></script>
+  <script>
+    // Offline-Speicher: nur auf einer echten Webadresse (https), nicht beim Öffnen der Datei am PC
+    if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+      navigator.serviceWorker.register("sw.js").catch(function () { });
+    }
+  </script>
+</body>
+</html>
