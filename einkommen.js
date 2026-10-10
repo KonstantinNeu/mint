@@ -1,15 +1,30 @@
-// Modul Einkommen: Grundgehalt und Sonderzahlungen (inklusive Provision)
+// Modul Einkommen: laufende Einkommensquellen (Gehalt, Nebenjob, eigene ...) und Sonderzahlungen (inklusive Provision)
 // Die Daten bleiben nur auf diesem Gerät (localStorage).
 
 const SPEICHER_NAME = "finanzapp-einkommen";
 
-let daten = { gehalt: [], sonder: [] };
+// Feste Einkommensquellen; eigene stehen in daten.eigene
+const QUELLEN_STANDARD = ["Gehalt", "Nebenjob", "Pension", "Kindergeld", "Mieteinnahmen"];
+
+let daten = { quellen: [], eigene: [], sonder: [] };
 let monat = 0; // 0 = Oktober 2026 ... 11 = September 2027
 
 try {
   const gespeichert = localStorage.getItem(SPEICHER_NAME);
   if (gespeichert) daten = JSON.parse(gespeichert);
 } catch (fehler) { /* ohne Speicher weiterarbeiten */ }
+
+// Früher gab es nur ein Grundgehalt: alte Einträge werden zur Quelle "Gehalt"
+if (!daten.quellen) daten.quellen = [];
+if (!daten.eigene) daten.eigene = [];
+if (!daten.sonder) daten.sonder = [];
+if (daten.gehalt) {
+  daten.gehalt.forEach(function (g) {
+    daten.quellen.push({ name: "Gehalt", ab: g.ab, betrag: g.betrag });
+  });
+  delete daten.gehalt;
+  speichern();
+}
 
 // Früher gab es eine eigene Provision: alte Einträge werden zu Sonderzahlungen "Provision"
 if (daten.provision) {
@@ -129,23 +144,53 @@ function eintragBearbeiten(li, titel, felder, beiSpeichern, beiAbbruch) {
   elemente[0].focus();
 }
 
-// Grundgehalt des Monats: der letzte Eintrag, der ab diesem Monat oder früher gilt
-function gehaltFuer(i) {
+// Betrag einer Einkommensquelle im Monat: der letzte Eintrag, der ab diesem Monat oder früher gilt
+function quelleFuer(name, i) {
   let treffer = null;
-  daten.gehalt.forEach(function (g) {
-    if (g.ab <= i && (treffer === null || g.ab >= treffer.ab)) treffer = g;
+  daten.quellen.forEach(function (q) {
+    if (q.name === name && q.ab <= i && (treffer === null || q.ab >= treffer.ab)) treffer = q;
   });
   return treffer ? treffer.betrag : null;
 }
 
+// Alle Quellen: die festen plus die eigenen
+function alleQuellen() {
+  return QUELLEN_STANDARD.concat(daten.eigene);
+}
+
 // Einnahmen-Summe eines Monats; null, wenn für den Monat nichts eingetragen ist
 function einkommenSumme(i) {
-  const gehalt = gehaltFuer(i);
   const sonderListe = daten.sonder.filter(function (s) { return s.monat === i; });
-  if (gehalt === null && sonderListe.length === 0) return null;
-  let summe = gehalt || 0;
+  let summe = 0;
+  let hatEintrag = sonderListe.length > 0;
+  alleQuellen().forEach(function (name) {
+    const betrag = quelleFuer(name, i);
+    if (betrag !== null) { summe += betrag; hatEintrag = true; }
+  });
   sonderListe.forEach(function (s) { summe += s.betrag; });
-  return summe;
+  return hatEintrag ? summe : null;
+}
+
+// Auswahl der Quelle füllen (feste und eigene), die Wahl bleibt erhalten
+function quellenFuellen() {
+  const auswahl = document.getElementById("quelle-art");
+  const alt = auswahl.value;
+  auswahl.innerHTML = "";
+  alleQuellen().forEach(function (name) {
+    const option = document.createElement("option");
+    option.value = name;
+    option.textContent = tName(name, "qu_");
+    auswahl.append(option);
+  });
+  if (alleQuellen().indexOf(alt) !== -1) auswahl.value = alt;
+}
+
+// Neuen Betrag einer Quelle ab dem angezeigten Monat speichern (ersetzt einen Eintrag desselben Monats)
+function quelleSetzen(name, betrag) {
+  daten.quellen = daten.quellen.filter(function (q) { return !(q.name === name && q.ab === monat); });
+  daten.quellen.push({ name: name, ab: monat, betrag: betrag });
+  speichern();
+  anzeigen();
 }
 
 function anzeigen() {
@@ -153,11 +198,32 @@ function anzeigen() {
   document.getElementById("monat-zurueck").disabled = monat === 0;
   document.getElementById("monat-vor").disabled = monat === 11;
 
-  const gehalt = gehaltFuer(monat);
+  quellenFuellen();
   const sonderListe = daten.sonder.filter(function (s) { return s.monat === monat; });
 
-  document.getElementById("gehalt-aktuell").textContent =
-    gehalt === null ? t("noch_nichts") : t("aktuell") + " " + geld(gehalt);
+  // Quellen, die in diesem Monat laufen (Betrag 0 = beendet)
+  const quellenListe = document.getElementById("quellen-liste");
+  quellenListe.innerHTML = "";
+  alleQuellen().forEach(function (name) {
+    const betrag = quelleFuer(name, monat);
+    if (!betrag) return;
+    const li = document.createElement("li");
+    const text = document.createElement("span");
+    text.textContent = tName(name, "qu_");
+    const summe = document.createElement("span");
+    summe.className = "einnahme";
+    summe.textContent = geld(betrag);
+    const bearbeiten = bearbeitenKnopf(function () {
+      eintragBearbeiten(li, tName(name, "qu_"), [{ typ: "betrag", wert: betrag }], function (werte) {
+        const neu = zuZahl(werte[0]);
+        if (neu === null || neu < 0) return false;
+        quelleSetzen(name, neu);
+      }, anzeigen);
+    });
+    li.append(text, summe, bearbeiten);
+    quellenListe.append(li);
+  });
+  document.getElementById("quellen-leer").hidden = quellenListe.children.length > 0;
 
   const liste = document.getElementById("sonder-liste");
   liste.innerHTML = "";
@@ -190,14 +256,8 @@ function anzeigen() {
   });
 
   // Monate ohne Einträge bleiben leer (kein 0,00 €)
-  const summeFeld = document.getElementById("ein-summe");
-  if (gehalt === null && sonderListe.length === 0) {
-    summeFeld.textContent = "–";
-  } else {
-    let summe = gehalt || 0;
-    sonderListe.forEach(function (s) { summe += s.betrag; });
-    summeFeld.textContent = geld(summe);
-  }
+  const gesamt = einkommenSumme(monat);
+  document.getElementById("ein-summe").textContent = gesamt === null ? "–" : geld(gesamt);
 }
 
 document.getElementById("monat-zurueck").addEventListener("click", function () {
@@ -211,13 +271,53 @@ document.getElementById("gehalt-form").addEventListener("submit", function (e) {
   e.preventDefault();
   const betrag = zuZahl(document.getElementById("gehalt-betrag").value);
   if (betrag === null || betrag < 0) return;
-  // Gibt es für diesen Monat schon einen Eintrag, wird er ersetzt
-  daten.gehalt = daten.gehalt.filter(function (g) { return g.ab !== monat; });
-  daten.gehalt.push({ ab: monat, betrag: betrag });
-  e.target.reset();
+  const name = document.getElementById("quelle-art").value;
+  document.getElementById("gehalt-betrag").value = "";
+  quelleSetzen(name, betrag);
+});
+
+// Eigene Einkommensquellen in den Einstellungen anlegen und löschen
+function quellenEinstellungenZeichnen() {
+  const liste = document.getElementById("einst-quellen");
+  liste.innerHTML = "";
+  daten.eigene.forEach(function (name) {
+    const li = document.createElement("li");
+    const text = document.createElement("span");
+    text.textContent = name;
+    const loeschen = document.createElement("button");
+    loeschen.type = "button";
+    loeschen.textContent = "×";
+    loeschen.setAttribute("aria-label", name + " " + t("loeschen"));
+    loeschen.addEventListener("click", function () {
+      if (!window.confirm(t("qu_loeschen_frage"))) return;
+      daten.eigene = daten.eigene.filter(function (n) { return n !== name; });
+      daten.quellen = daten.quellen.filter(function (q) { return q.name !== name; });
+      speichern();
+      quellenEinstellungenZeichnen();
+      anzeigen();
+    });
+    li.append(text, loeschen);
+    liste.append(li);
+  });
+}
+
+document.getElementById("einst-quellen-form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  const feld = document.getElementById("einst-quellen-name");
+  const name = feld.value.trim().slice(0, 30);
+  if (name === "") return;
+  const gibtEs = alleQuellen().some(function (n) {
+    return n.toLowerCase() === name.toLowerCase() || tName(n, "qu_").toLowerCase() === name.toLowerCase();
+  });
+  if (gibtEs) { feld.setCustomValidity(t("qu_doppelt")); feld.reportValidity(); feld.setCustomValidity(""); return; }
+  daten.eigene.push(name);
   speichern();
+  feld.value = "";
+  quellenEinstellungenZeichnen();
   anzeigen();
 });
+
+quellenEinstellungenZeichnen();
 
 // Bei "Anderes" erscheint ein Textfeld für die Bezeichnung
 const sonderArt = document.getElementById("sonder-art");

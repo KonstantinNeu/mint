@@ -31,22 +31,26 @@ menueGriff.addEventListener("click", function () {
 });
 
 // Menü nach den Einstellungen aufbauen: Übersicht plus die gewählten Bereiche.
-// Die ersten fünf stehen in der Leiste, weitere klappen über den Griff auf. Abgewählte Reiter verschwinden.
+// Bei bis zu 4 Bereichen stehen alle in der Leiste. Sonst stehen die ersten drei dort,
+// der Rest klappt über "Mehr" auf. Abgewählte Reiter verschwinden.
 function menueAufbauen() {
-  const reihenfolge = ["uebersicht", "einkommen", "fixkosten", "ausgaben", "budget", "ruecklage", "schulden", "jahr"];
+  const reihenfolge = ["uebersicht", "einkommen", "ausgaben", "fixkosten", "budget", "ruecklage", "schulden", "jahr"];
   const sichtbar = reihenfolge.filter(modulAktiv);
   const zeile = document.querySelector(".menue-zeile");
   const extra = document.getElementById("menue-extra");
+  const platz = sichtbar.length <= 4 ? 4 : 3;
 
   reihenfolge.forEach(function (name) {
     document.querySelector('.menue button[data-seite="' + name + '"]').hidden = sichtbar.indexOf(name) === -1;
   });
   sichtbar.forEach(function (name, i) {
-    (i < 5 ? zeile : extra).append(document.querySelector('.menue button[data-seite="' + name + '"]'));
+    const knopf = document.querySelector('.menue button[data-seite="' + name + '"]');
+    if (i < platz) zeile.insertBefore(knopf, menueGriff);
+    else extra.append(knopf);
   });
 
-  menueGriff.hidden = sichtbar.length <= 5;
-  if (sichtbar.length <= 5) menueZu();
+  menueGriff.hidden = sichtbar.length <= 4;
+  if (sichtbar.length <= 4) menueZu();
   menueGriff.classList.toggle("hat-aktiv", extra.querySelector("button.aktiv") !== null);
 
   // Wurde der gerade offene Bereich abgewählt, geht es zurück zur Übersicht

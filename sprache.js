@@ -233,7 +233,45 @@ function uebersetzeStatisch() {
   });
 }
 
+// Einkommensquellen
+Object.assign(TEXTE.de, {
+  ein_laufend: "Laufendes Einkommen (netto)", ein_quelle: "Einkommensquelle",
+  ein_gilt_ab: "Gilt ab dem angezeigten Monat für alle folgenden Monate. Wenn ein Einkommen endet, trage 0 ein.",
+  qu_Gehalt: "Gehalt", qu_Nebenjob: "Nebenjob", qu_Pension: "Pension", qu_Kindergeld: "Kindergeld", qu_Mieteinnahmen: "Mieteinnahmen",
+  einst_quellen: "Einkommensquellen",
+  einst_quellen_hinweis: "Gehalt, Nebenjob, Pension, Kindergeld und Mieteinnahmen gibt es schon. Lege hier eigene Quellen an. Beim Löschen gehen auch ihre Beträge verloren.",
+  qu_neu_ph: "Neue Quelle", qu_doppelt: "Diese Quelle gibt es schon.", qu_loeschen_frage: "Diese Quelle mit allen Beträgen löschen?"
+});
+Object.assign(TEXTE.en, {
+  ein_laufend: "Regular income (net)", ein_quelle: "Income source",
+  ein_gilt_ab: "Applies from the month shown to all following months. When an income ends, enter 0.",
+  qu_Gehalt: "Salary", qu_Nebenjob: "Side job", qu_Pension: "Pension", qu_Kindergeld: "Child benefit", qu_Mieteinnahmen: "Rental income",
+  einst_quellen: "Income sources",
+  einst_quellen_hinweis: "Salary, side job, pension, child benefit and rental income already exist. Create your own sources here. Deleting a source also deletes its amounts.",
+  qu_neu_ph: "New source", qu_doppelt: "This source already exists.", qu_loeschen_frage: "Delete this source with all its amounts?"
+});
+Object.assign(TEXTE.it, {
+  ein_laufend: "Reddito periodico (netto)", ein_quelle: "Fonte di reddito",
+  ein_gilt_ab: "Vale dal mese mostrato per tutti i mesi successivi. Se un reddito termina, inserisci 0.",
+  qu_Gehalt: "Stipendio", qu_Nebenjob: "Lavoretto", qu_Pension: "Pensione", qu_Kindergeld: "Assegno familiare", qu_Mieteinnahmen: "Affitti incassati",
+  einst_quellen: "Fonti di reddito",
+  einst_quellen_hinweis: "Stipendio, lavoretto, pensione, assegno familiare e affitti incassati ci sono già. Crea qui le tue fonti. Eliminando una fonte si eliminano anche i suoi importi.",
+  qu_neu_ph: "Nuova fonte", qu_doppelt: "Questa fonte esiste già.", qu_loeschen_frage: "Eliminare questa fonte con tutti i suoi importi?"
+});
+Object.assign(TEXTE.fr, {
+  ein_laufend: "Revenus réguliers (net)", ein_quelle: "Source de revenus",
+  ein_gilt_ab: "Valable à partir du mois affiché pour tous les mois suivants. Quand un revenu s'arrête, saisissez 0.",
+  qu_Gehalt: "Salaire", qu_Nebenjob: "Petit boulot", qu_Pension: "Pension", qu_Kindergeld: "Allocations familiales", qu_Mieteinnahmen: "Revenus locatifs",
+  einst_quellen: "Sources de revenus",
+  einst_quellen_hinweis: "Salaire, petit boulot, pension, allocations familiales et revenus locatifs existent déjà. Créez ici vos propres sources. Supprimer une source supprime aussi ses montants.",
+  qu_neu_ph: "Nouvelle source", qu_doppelt: "Cette source existe déjà.", qu_loeschen_frage: "Supprimer cette source avec tous ses montants ?"
+});
+
 // Beschriftung für den Griff, der die weiteren Reiter im Menü aufklappt
+TEXTE.de.nav_mehr = "Mehr";
+TEXTE.en.nav_mehr = "More";
+TEXTE.it.nav_mehr = "Altro";
+TEXTE.fr.nav_mehr = "Plus";
 TEXTE.de.menue_mehr = "Weitere Reiter";
 TEXTE.en.menue_mehr = "More tabs";
 TEXTE.it.menue_mehr = "Altre schede";

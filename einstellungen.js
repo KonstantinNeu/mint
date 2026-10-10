@@ -59,7 +59,7 @@ function alleSeitenAktualisieren() {
   moduleListeZeichnen();
   [
     "kategorienFuellen", "anzeigen", "fixAnzeigen", "ausAnzeigen", "datumAnzeigen",
-    "budAnzeigen", "rlAnzeigen", "ueAnzeigen", "schAnzeigen", "rlDatumAnzeigen", "begruessungAnzeigen", "fixEinstellungenZeichnen", "zielAnzeigen", "jahrAnzeigen", "spStatusZeichnen", "menueAufbauen"
+    "budAnzeigen", "rlAnzeigen", "ueAnzeigen", "schAnzeigen", "rlDatumAnzeigen", "begruessungAnzeigen", "fixEinstellungenZeichnen", "quellenEinstellungenZeichnen", "zielAnzeigen", "jahrAnzeigen", "spStatusZeichnen", "menueAufbauen"
   ].forEach(function (name) {
     if (typeof window[name] === "function") window[name]();
   });

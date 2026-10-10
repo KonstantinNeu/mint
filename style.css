@@ -514,13 +514,13 @@ button:disabled {
   gap: 8px;
 }
 
-#sonder-form {
+#sonder-form, #gehalt-form {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-#aus-form select, #sonder-form select {
+#aus-form select, #sonder-form select, #gehalt-form select {
   width: 100%;
   padding: 12px;
   background: var(--hintergrund);
@@ -972,41 +972,42 @@ button.link {
 }
 
 .menue.offen .menue-extra {
-  max-height: 60px;
+  max-height: 160px;
 }
 
-.menue .menue-griff {
-  position: absolute;
-  top: -22px;
-  left: 50%;
-  flex: none;
-  width: 56px;
-  height: 22px;
-  padding: 0;
-  transform: translateX(-50%);
-  background: linear-gradient(180deg, var(--flaeche), var(--flaeche-2));
-  border: 1px solid var(--akzent);
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
-  color: var(--akzent);
-  font-size: 13px;
+/* Die Reiter im aufgeklappten Bereich: drei pro Reihe */
+.menue-extra {
+  flex-wrap: wrap;
+}
+
+.menue-extra button {
+  flex: 1 1 33%;
+}
+
+/* Große Reiter: Symbol über dem Namen */
+.menue button::before {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 24px;
   line-height: 1;
-  text-shadow: none;
 }
 
-.menue .menue-griff::after { display: none; }
+.menue button[data-seite="uebersicht"]::before { content: "◈"; }
+.menue button[data-seite="einkommen"]::before { content: "＋"; }
+.menue button[data-seite="fixkosten"]::before { content: "▦"; }
+.menue button[data-seite="ausgaben"]::before { content: "−"; }
+.menue button[data-seite="budget"]::before { content: "◔"; }
+.menue button[data-seite="ruecklage"]::before { content: "▲"; }
+.menue button[data-seite="schulden"]::before { content: "⚖"; }
+.menue button[data-seite="jahr"]::before { content: "▤"; }
+.menue .menue-griff::before { content: "☰"; }
 
-.menue .menue-griff span {
-  display: inline-block;
-  transition: transform 0.3s;
-}
-
-.menue.offen .menue-griff span { transform: rotate(180deg); }
-
-/* Ist gerade ein Reiter aus dem versteckten Bereich offen, leuchtet der Griff golden */
-.menue .menue-griff.hat-aktiv {
-  background: var(--akzent);
-  color: var(--akzent-text);
+/* Ist gerade ein Reiter aus dem versteckten Bereich offen, leuchtet "Mehr" golden */
+.menue .menue-griff.hat-aktiv,
+.menue.offen .menue-griff {
+  color: var(--akzent);
+  font-weight: 700;
+  text-shadow: 0 0 10px var(--akzent);
 }
 
 /* Sparen: Datumszeile wie bei den Ausgaben */

@@ -142,11 +142,15 @@
       </div>
 
       <div class="karte">
-        <h3 data-i18n="ein_gehalt">Grundgehalt (netto)</h3>
-        <p id="gehalt-aktuell" class="hinweis"></p>
-        <form id="gehalt-form" class="zeile">
-          <input id="gehalt-betrag" type="text" inputmode="decimal" data-i18n-phw="betrag_in" placeholder="Betrag in €" required>
-          <button type="submit" data-i18n="buchen">Buchen</button>
+        <h3 data-i18n="ein_laufend">Laufendes Einkommen (netto)</h3>
+        <p id="quellen-leer" class="hinweis" data-i18n="noch_nichts">Noch nichts eingetragen.</p>
+        <ul id="quellen-liste" class="liste"></ul>
+        <form id="gehalt-form">
+          <select id="quelle-art" data-i18n-aria="ein_quelle" aria-label="Einkommensquelle"></select>
+          <div class="zeile">
+            <input id="gehalt-betrag" type="text" inputmode="decimal" data-i18n-phw="betrag_in" placeholder="Betrag in €" required>
+            <button type="submit" data-i18n="buchen">Buchen</button>
+          </div>
         </form>
         <p class="hinweis" data-i18n="ein_gilt_ab">Gilt ab dem angezeigten Monat für alle folgenden Monate.</p>
       </div>
@@ -326,6 +330,16 @@
       </div>
 
       <div class="karte">
+        <h3 data-i18n="einst_quellen">Einkommensquellen</h3>
+        <p class="hinweis" data-i18n="einst_quellen_hinweis">Lege hier eigene Einkommensquellen an.</p>
+        <ul id="einst-quellen" class="liste"></ul>
+        <form id="einst-quellen-form" class="zeile">
+          <input id="einst-quellen-name" type="text" maxlength="30" autocomplete="off" data-i18n-ph="qu_neu_ph" placeholder="Neue Quelle" required>
+          <button type="submit" data-i18n="hinzufuegen">Hinzufügen</button>
+        </form>
+      </div>
+
+      <div class="karte">
         <h3 data-i18n="einst_fix">Fixkosten</h3>
         <p class="hinweis" data-i18n="einst_fix_hinweis">Lege hier deine Fixkosten selbst an.</p>
         <ul id="einst-fix" class="liste"></ul>
@@ -453,8 +467,8 @@
       <button data-seite="fixkosten" data-i18n="nav_fixkosten">Fixkosten</button>
       <button data-seite="ausgaben" data-i18n="nav_ausgaben">Ausgaben</button>
       <button data-seite="budget" data-i18n="nav_budget">Budget</button>
+      <button type="button" class="menue-griff" id="menue-griff" aria-expanded="false" data-i18n="nav_mehr" data-i18n-aria="menue_mehr" aria-label="Weitere Reiter">Mehr</button>
     </div>
-    <button type="button" class="menue-griff" id="menue-griff" aria-expanded="false" data-i18n-aria="menue_mehr" aria-label="Weitere Reiter"><span aria-hidden="true">▴</span></button>
   </nav>
 
   <script src="explosion.js"></script>

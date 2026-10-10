@@ -2,7 +2,7 @@
 // Wichtig: Nach Änderungen an App-Dateien die Nummer bei CACHE_NAME erhöhen, damit Geräte die neue Version holen.
 // Die Finanzdaten (localStorage) hat damit nichts zu tun, sie liegen nie in diesem Speicher.
 
-const CACHE_NAME = "mint-v1";
+const CACHE_NAME = "mint-v2";
 
 const DATEIEN = [
   "./",
